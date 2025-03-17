@@ -2,7 +2,8 @@
     "files.associations": {
         "tokenizer.C": "c",
         "Matrix.C": "c",
-        "*.c": "c"
+        "*.c": "c",
+        "stdlib.h": "c"
     },
     "C_Cpp.default.compilerPath": "C:/mingw64/bin/gcc.exe"
 }
