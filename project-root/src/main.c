@@ -1,36 +1,28 @@
 #include <stdio.h>
-#include <string.h>
-#include "tokenizer.h"
+#include <stdlib.h>
 #include "model.h"
 
 int main() {
-    char text[] = "This is a sample text for tokenization.";
-    char tokens[MAX_TOKENS][MAX_TOKEN_LENGTH];
-    int token_count = 0;
-    char vocab[VOCAB_SIZE][MAX_TOKEN_LENGTH];
-    int vocab_size = 0;
+    NeuralNetwork nn;
+    initialize_network(&nn);
 
-    preprocess_text(text);
-    tokenize(text, tokens, &token_count);
+    // Example training data: XOR problem
+    float input1[] = {0, 0, 1};
+    float input2[] = {0, 1, 1};
+    float target1[] = {0, 1};
+    float target2[] = {1, 0};
 
-    for (int i = 0; i < token_count; i++) {
-        int token_id = get_token_id(tokens[i], vocab, vocab_size);
-        if (token_id == -1) {
-            token_id = add_token_to_vocab(tokens[i], vocab, &vocab_size);
-        }
-        printf("Token: %s, ID: %d\n", tokens[i], token_id);
+    for (int i = 0; i < 1000; i++) {
+        train(&nn, input1, target1);
+        train(&nn, input2, target2);
     }
 
-    // Create and test a neural network
-    NeuralNetwork model;
-    initialize_model(&model);
+    float output[OUTPUT_SIZE];
+    forward_pass(&nn, input1, output);
+    printf("Output for [0,0,1]: %.3f, %.3f\n", output[0], output[1]);
 
-    float input[INPUT_SIZE] = {0};
-    float hidden[HIDDEN_SIZE] = {0};
-    float output[OUTPUT_SIZE] = {0};
+    forward_pass(&nn, input2, output);
+    printf("Output for [0,1,1]: %.3f, %.3f\n", output[0], output[1]);
 
-    forward(&model, input, hidden, output);
-
-    printf("Forward pass completed!\n");
     return 0;
 }
