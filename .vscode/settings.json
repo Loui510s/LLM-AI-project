@@ -3,5 +3,5 @@
         "tokenizer.C": "cpp",
         "Matrix.C": "cpp"
     },
-    "C_Cpp.default.compilerPath": "cl.exe"
+    "C_Cpp.default.compilerPath": "C:/mingw64/bin/gcc.exe"
 }
