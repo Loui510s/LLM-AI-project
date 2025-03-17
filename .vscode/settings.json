@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "tokenizer.C": "cpp"
-    }
+        "tokenizer.C": "cpp",
+        "Matrix.C": "cpp"
+    },
+    "C_Cpp.default.compilerPath": "cl.exe"
 }
