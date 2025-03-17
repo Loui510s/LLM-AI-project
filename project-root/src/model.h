@@ -1,16 +1,11 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#define INPUT_SIZE 10
-#define HIDDEN_SIZE 5
-#define OUTPUT_SIZE 10
+#include "matrix.h"
 
 typedef struct {
-    float weights_ih[INPUT_SIZE][HIDDEN_SIZE];
-    float weights_ho[HIDDEN_SIZE][OUTPUT_SIZE];
-} NeuralNetwork;
-
-void initialize_model(NeuralNetwork *model);
-void forward(NeuralNetwork *model, float *input, float *output);
+    Matrix weights_ih;
+    Matrix weights_ho;
+} Model;
 
 #endif // MODEL_H

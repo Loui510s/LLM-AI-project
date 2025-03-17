@@ -1,19 +1,22 @@
 #include <stdio.h>
+#include <string.h>
 #include "tokenizer.h"
 #include "model.h"
 
+#define MAX_TOKENS 100
+#define MAX_TOKEN_LENGTH 50
+#define VOCAB_SIZE 1000
+
 int main() {
-    char text[] = "Hello world this is a basic tokenizer example";
+    char text[] = "This is a sample text for tokenization.";
     char tokens[MAX_TOKENS][MAX_TOKEN_LENGTH];
     int token_count = 0;
     char vocab[VOCAB_SIZE][MAX_TOKEN_LENGTH];
     int vocab_size = 0;
 
-    // Preprocess and tokenize text
-    preprocess_text(text);
+    preprocess_text(text, text); // Assuming in-place preprocessing
     tokenize(text, tokens, &token_count);
 
-    printf("Tokens:\n");
     for (int i = 0; i < token_count; i++) {
         int token_id = get_token_id(tokens[i], vocab, vocab_size);
         if (token_id == -1) {
