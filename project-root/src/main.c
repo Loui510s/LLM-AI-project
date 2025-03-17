@@ -3,10 +3,6 @@
 #include "tokenizer.h"
 #include "model.h"
 
-#define MAX_TOKENS 100
-#define MAX_TOKEN_LENGTH 50
-#define VOCAB_SIZE 1000
-
 int main() {
     char text[] = "This is a sample text for tokenization.";
     char tokens[MAX_TOKENS][MAX_TOKEN_LENGTH];
@@ -14,7 +10,7 @@ int main() {
     char vocab[VOCAB_SIZE][MAX_TOKEN_LENGTH];
     int vocab_size = 0;
 
-    preprocess_text(text, text); // Assuming in-place preprocessing
+    preprocess_text(text);
     tokenize(text, tokens, &token_count);
 
     for (int i = 0; i < token_count; i++) {
@@ -30,9 +26,10 @@ int main() {
     initialize_model(&model);
 
     float input[INPUT_SIZE] = {0};
+    float hidden[HIDDEN_SIZE] = {0};
     float output[OUTPUT_SIZE] = {0};
 
-    forward(&model, input, output);
+    forward(&model, input, hidden, output);
 
     printf("Forward pass completed!\n");
     return 0;
