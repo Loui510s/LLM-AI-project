@@ -13,5 +13,7 @@ typedef struct {
 Model* create_model(int input_size, int hidden_size, int output_size);
 void free_model(Model* model);
 Matrix* model_forward(Model* model, Matrix* input);
+void save_model(Model* model, const char* filename);
+Model* load_model(const char* filename);
 
 #endif
