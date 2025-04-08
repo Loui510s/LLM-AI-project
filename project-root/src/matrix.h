@@ -1,8 +1,16 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
-void multiply_matrices(const float *A, float *B, float *C, int A_rows, int A_cols, int B_cols);
-void add_matrices(float *A, float *B, float *C, int rows, int cols);
-void initialize_matrix(float *matrix, int rows, int cols);
+typedef struct {
+    int rows;
+    int cols;
+    float* data;
+} Matrix;
 
-#endif // MATRIX_H
+Matrix* create_matrix(int rows, int cols);
+void free_matrix(Matrix* m);
+Matrix* mat_mul(Matrix* a, Matrix* b);
+Matrix* mat_relu(Matrix* m);
+Matrix* mat_softmax(Matrix* m);
+
+#endif

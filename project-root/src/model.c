@@ -1,85 +1,105 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <time.h>
 #include "model.h"
+#include "matrix.h"
 
-// Helper function to generate random numbers
-float rand_float() {
-    return (float)rand() / RAND_MAX * 2.0 - 1.0; // Random value between -1 and 1
+// Random float between -1 and 1
+float randf() {
+    return ((float)rand() / RAND_MAX) * 2.0f - 1.0f;
 }
 
-void initialize_network(NeuralNetwork *nn) {
-    for (int i = 0; i < HIDDEN_SIZE; i++) {
-        for (int j = 0; j < INPUT_SIZE; j++) {
-            nn->weights_ih[i][j] = rand_float();
-        }
-        nn->hidden_bias[i] = rand_float();
+
+Model* create_model(int input_size, int hidden_size, int output_size) {
+    srand((unsigned int)time(NULL)); // Seed random only once
+
+    Model* model = malloc(sizeof(Model));
+    model->W1 = create_matrix(input_size, hidden_size);
+    model->b1 = create_matrix(1, hidden_size);
+    model->W2 = create_matrix(hidden_size, output_size);
+    model->b2 = create_matrix(1, output_size);
+
+    // Fill matrices with random weights
+    for (int i = 0; i < input_size * hidden_size; i++) {
+        model->W1->data[i] = randf();
     }
-    for (int i = 0; i < OUTPUT_SIZE; i++) {
-        for (int j = 0; j < HIDDEN_SIZE; j++) {
-            nn->weights_ho[i][j] = rand_float();
-        }
-        nn->output_bias[i] = rand_float();
+    for (int i = 0; i < hidden_size; i++) {
+        model->b1->data[i] = randf();
     }
+    for (int i = 0; i < hidden_size * output_size; i++) {
+        model->W2->data[i] = randf();
+    }
+    for (int i = 0; i < output_size; i++) {
+        model->b2->data[i] = randf();
+    }
+
+    return model;
 }
 
-void forward_pass(NeuralNetwork *nn, float input[], float output[]) {
-    float hidden[HIDDEN_SIZE];
 
-    // Compute Hidden Layer Activations
-    for (int i = 0; i < HIDDEN_SIZE; i++) {
-        hidden[i] = nn->hidden_bias[i];
-        for (int j = 0; j < INPUT_SIZE; j++) {
-            hidden[i] += nn->weights_ih[i][j] * input[j];
-        }
-        // Apply Activation Function (ReLU)
-        hidden[i] = fmaxf(0, hidden[i]);  
-    }
-
-    // Compute Output Layer Activations
-    for (int i = 0; i < OUTPUT_SIZE; i++) {
-        output[i] = nn->output_bias[i];
-        for (int j = 0; j < HIDDEN_SIZE; j++) {
-            output[i] += nn->weights_ho[i][j] * hidden[j];
-        }
-        // Apply Activation Function (Sigmoid for probability outputs)
-        output[i] = 1.0f / (1.0f + expf(-output[i]));
-    }
+void free_model(Model* model) {
+    free_matrix(model->W1);
+    free_matrix(model->b1);
+    free_matrix(model->W2);
+    free_matrix(model->b2);
+    free(model);
 }
 
-void train(NeuralNetwork *nn, float input[], float target[]) {
-    float output[OUTPUT_SIZE];
-    forward_pass(nn, input, output);
-
-    float output_error[OUTPUT_SIZE];
-    float hidden_error[HIDDEN_SIZE];
-
-    // Compute output layer error
-    for (int i = 0; i < OUTPUT_SIZE; i++) {
-        output_error[i] = (target[i] - output[i]) * output[i] * (1 - output[i]); // Derivative of Sigmoid
+Matrix* model_forward(Model* model, Matrix* input) {
+    Matrix* z1 = mat_mul(input, model->W1);
+    for (int i = 0; i < z1->rows * z1->cols; i++) {
+        z1->data[i] += model->b1->data[i % model->b1->cols];
     }
 
-    // Compute hidden layer error
-    for (int i = 0; i < HIDDEN_SIZE; i++) {
-        hidden_error[i] = 0;
-        for (int j = 0; j < OUTPUT_SIZE; j++) {
-            hidden_error[i] += output_error[j] * nn->weights_ho[j][i];
-        }
-        hidden_error[i] *= (hidden_error[i] > 0) ? 1 : 0; // Derivative of ReLU
+    Matrix* a1 = mat_relu(z1);
+    free_matrix(z1);
+
+    Matrix* z2 = mat_mul(a1, model->W2);
+    free_matrix(a1);
+
+    for (int i = 0; i < z2->rows * z2->cols; i++) {
+        z2->data[i] += model->b2->data[i % model->b2->cols];
     }
 
-    // Update Weights (Gradient Descent)
-    for (int i = 0; i < OUTPUT_SIZE; i++) {
-        for (int j = 0; j < HIDDEN_SIZE; j++) {
-            nn->weights_ho[i][j] += LEARNING_RATE * output_error[i] * j;
-        }
-        nn->output_bias[i] += LEARNING_RATE * output_error[i];
-    }
+    Matrix* output = mat_softmax(z2);
+    free_matrix(z2);
 
-    for (int i = 0; i < HIDDEN_SIZE; i++) {
-        for (int j = 0; j < INPUT_SIZE; j++) {
-            nn->weights_ih[i][j] += LEARNING_RATE * hidden_error[i] * j;
-        }
-        nn->hidden_bias[i] += LEARNING_RATE * hidden_error[i];
-    }
+    return output;
+}
+#include <stdio.h>
+
+void save_matrix(FILE* f, Matrix* m) {
+    fwrite(&m->rows, sizeof(int), 1, f);
+    fwrite(&m->cols, sizeof(int), 1, f);
+    fwrite(m->data, sizeof(float), m->rows * m->cols, f);
+}
+
+Matrix* load_matrix(FILE* f) {
+    int rows, cols;
+    fread(&rows, sizeof(int), 1, f);
+    fread(&cols, sizeof(int), 1, f);
+    Matrix* m = create_matrix(rows, cols);
+    fread(m->data, sizeof(float), rows * cols, f);
+    return m;
+}
+
+void save_model(Model* model, const char* filename) {
+    FILE* f = fopen(filename, "wb");
+    if (!f) return;
+    save_matrix(f, model->W1);
+    save_matrix(f, model->b1);
+    save_matrix(f, model->W2);
+    save_matrix(f, model->b2);
+    fclose(f);
+}
+
+Model* load_model(const char* filename) {
+    FILE* f = fopen(filename, "rb");
+    if (!f) return NULL;
+    Model* model = malloc(sizeof(Model));
+    model->W1 = load_matrix(f);
+    model->b1 = load_matrix(f);
+    model->W2 = load_matrix(f);
+    model->b2 = load_matrix(f);
+    fclose(f);
+    return model;
 }

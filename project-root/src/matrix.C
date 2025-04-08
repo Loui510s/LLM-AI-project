@@ -1,26 +1,54 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "matrix.h"
 
-void multiply_matrices(const float *A, float *B, float *C, int A_rows, int A_cols, int B_cols) {
-    for (int i = 0; i < A_rows; i++) {
-        for (int j = 0; j < B_cols; j++) {
-            C[i * B_cols + j] = 0;
-            for (int k = 0; k < A_cols; k++) {
-                C[i * B_cols + j] += A[i * A_cols + k] * B[k * B_cols + j];
+Matrix* create_matrix(int rows, int cols) {
+    Matrix* m = (Matrix*)malloc(sizeof(Matrix));
+    m->rows = rows;
+    m->cols = cols;
+    m->data = (float*)calloc(rows * cols, sizeof(float));
+    return m;
+}
+
+void free_matrix(Matrix* m) {
+    free(m->data);
+    free(m);
+}
+
+Matrix* mat_mul(Matrix* a, Matrix* b) {
+    if (a->cols != b->rows) return NULL;
+    Matrix* result = create_matrix(a->rows, b->cols);
+    for (int i = 0; i < a->rows; i++) {
+        for (int j = 0; j < b->cols; j++) {
+            float sum = 0.0;
+            for (int k = 0; k < a->cols; k++) {
+                sum += a->data[i * a->cols + k] * b->data[k * b->cols + j];
             }
+            result->data[i * b->cols + j] = sum;
         }
     }
+    return result;
 }
 
-void add_matrices(float *A, float *B, float *C, int rows, int cols) {
-    for (int i = 0; i < rows * cols; i++) {
-        C[i] = A[i] + B[i];
+Matrix* mat_relu(Matrix* m) {
+    Matrix* result = create_matrix(m->rows, m->cols);
+    for (int i = 0; i < m->rows * m->cols; i++) {
+        result->data[i] = fmaxf(0, m->data[i]);
     }
+    return result;
 }
 
-void initialize_matrix(float *matrix, int rows, int cols) {
-    for (int i = 0; i < rows * cols; i++) {
-        matrix[i] = (float)rand() / RAND_MAX;
+Matrix* mat_softmax(Matrix* m) {
+    Matrix* result = create_matrix(m->rows, m->cols);
+    for (int i = 0; i < m->rows; i++) {
+        float sum = 0.0;
+        for (int j = 0; j < m->cols; j++) {
+            result->data[i * m->cols + j] = expf(m->data[i * m->cols + j]);
+            sum += result->data[i * m->cols + j];
+        }
+        for (int j = 0; j < m->cols; j++) {
+            result->data[i * m->cols + j] /= sum;
+        }
     }
+    return result;
 }
